@@ -1,27 +1,123 @@
 import { v4 as uuidv4 } from "uuid"
 
-/*
- **
- ** avoid any "weird" number as input
- */
+type ProductName = "Shoes" | "Shirt" | "Pants"
 
-/* 1.  factory function  */
-/*  a factory function creates a new object  */
+type PriceNumber = number & { readonly __brand: "PriceNumber" }
 
-/* 2.  constructor function  */
-// OOP
-// a constructor function creates a new object and sets its properties
+function createPrice(value: number): PriceNumber {
+	if (value < 0) {
+		throw new Error("Value must be positive")
+	}
 
-// create a primitive obsessed type
-
-// modify this code for testing !!
-// this replicates user input
-const orderOne = {
-	id: uuidv4(), // generate a unique id for the order
-	name: "order one",
-	price: -100,
-	quantity: 200000000,
-	total: 456465465465465400,
+	return value as PriceNumber
 }
 
-console.log(orderOne)
+// factory function
+function createProduct(
+	id: string,
+	name: ProductName,
+	price: PriceNumber,
+): Product {
+	if (name !== "Shoes" && name !== "Shirt" && name !== "Pants") {
+		throw new Error("Name must be Shoes, Shirt, or Pants")
+	}
+
+	if (!id) {
+		throw new Error("Id must be provided")
+	}
+
+	if (price < 0) {
+		throw new Error("Price must be positive")
+	}
+
+	return {
+		id: uuidv4(),
+		name,
+		price,
+	}
+}
+
+type Product = {
+	id: string
+	name: ProductName
+	price: number
+}
+
+type ProductId = string & { readonly __brand: unique symbol }
+type StockLevel = number & { readonly __brand: unique symbol }
+
+type EventName = DomainEvent["type"]
+
+type ProductCreatedEvent = {
+	readonly type: "ProductCreated"
+	readonly productId: ProductId
+	readonly name: ProductName
+	readonly price: PriceNumber
+}
+
+type PriceUpdatedEvent = {
+	readonly type: "PriceUpdated"
+	readonly productId: ProductId
+	readonly oldPrice: PriceNumber
+	readonly newPrice: PriceNumber
+}
+
+// ✅ Precise — the event carries what changed and why
+type StockReducedEvent = {
+	readonly type: "StockReduced"
+	readonly productId: ProductId
+	readonly newLevel: StockLevel
+	readonly quantity: Quantity
+}
+type DomainEvent = ProductCreatedEvent | PriceUpdatedEvent | StockReducedEvent
+
+type Observer = (event: DomainEvent) => void
+
+type Quantity = number & { readonly __brand: unique symbol }
+
+// first product (easy construction)
+const product1: Product = {
+	id: uuidv4(),
+	name: "Shoes",
+	price: 100,
+}
+
+const sendEmailMock = (event: DomainEvent, email: string, subject: string) => {
+	console.log(
+		`Email sent to ${email} with subject "${subject}" for event ${event.type}`,
+	)
+}
+
+const saveToDatabaseMock = (event: DomainEvent, data: any) => {
+	console.log(
+		`Data saved to database: ${JSON.stringify(data)} for event ${event.type}`,
+	)
+}
+
+const observers = []
+
+observers.push(sendEmailMock)
+observers.push(saveToDatabaseMock)
+
+try {
+	const product2 = createProduct(uuidv4(), "Shirt", createPrice(50))
+	console.log(product2)
+	observers.forEach((observer) =>
+		observer(
+			{
+				type: "ProductCreated",
+				productId: product2.id as ProductId,
+				name: product2.name,
+				price: product2.price as PriceNumber,
+			},
+			"test one",
+			"test two",
+		),
+	)
+} catch (error) {
+	if (error instanceof Error) {
+		console.error(error.message)
+	} else {
+		console.error("Unknown error")
+	}
+}
