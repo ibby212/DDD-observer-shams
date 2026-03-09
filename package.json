@@ -1,7 +1,7 @@
 {
 	"name": "ex-01",
 	"version": "1.0.0",
-	"description": "",
+	"description": "1. Running code in TypeScript with Node.js 2. Basic TypeScript types (number, string, boolean, etc.) 3. Functions and type annotations 4. Type safety and compile-time checks 5. Factory functions 6. Smart constructors 7. Value objects 8. Entities 9. Observer Pattern",
 	"main": "index.js",
 	"type": "module",
 	"scripts": {
@@ -16,5 +16,17 @@
 	},
 	"dependencies": {
 		"uuid": "^13.0.0"
-	}
+	},
+	"directories": {
+		"doc": "docs"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/web-rest-api/DDD-observer.git"
+	},
+	"keywords": [],
+	"bugs": {
+		"url": "https://github.com/web-rest-api/DDD-observer/issues"
+	},
+	"homepage": "https://github.com/web-rest-api/DDD-observer#readme"
 }

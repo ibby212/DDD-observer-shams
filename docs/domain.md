@@ -1,15 +1,14 @@
-# E-Commerce: Inventory & Stock Management
+# FinTech: Bank Account Security
 
-This is a classic "reactive" system. The domain doesn't care how a notification is sent;
-it only cares that the stock level has changed.
+This is a highly secure, reactive system. The domain doesn't care how a security alert is delivered or how audit logs are stored; it only cares that a transaction has occurred and whether it triggers any security thresholds.
 
-## The Entity: Product
+## The Entity: Account
 
-The Business Rule: A product's StockLevel must never drop below zero. If an order exceeds available stock, throw an exception.
+The Business Rule: A bank account's balance must never drop below zero (no overdrafts allowed). If a withdrawal amount exceeds the available balance, throw an exception.
 
-The State Change: Product.ReduceStock(quantity)
+The State Change: Account.withdraw(amount)
 
 ## Observer Opportunities
 
-- Low Stock Observer: If stock falls below 5, trigger a "Reorder" process.
-- Out of Stock Observer: If stock hits 0, update the website to mark the item as "Unavailable."
+- Fraud Detection Observer: If a withdrawal exceeds $5,000, trigger an SMS verification process and security alert.
+- Audit Log Observer: For every successful withdrawal, record the transaction details into a read-only security database.

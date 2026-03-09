@@ -1,113 +1,39 @@
-import { v4 as uuidv4 } from "uuid"
+import { v4 as uuidv4 } from "uuid";
+import { Account, createAccountId, createMoneyAmount } from "./domain/account.js";
+import { fraudDetectionObserver, auditLogObserver } from "./observers/accountObservers.js";
+console.log("--- Starting Bank Vault DDD Example ---");
 
-type ProductName = "Shoes" | "Shirt" | "Pants"
+// Setup
+const myAccount = new Account(createAccountId(uuidv4()), createMoneyAmount(10000));
+myAccount.subscribe(fraudDetectionObserver);
+myAccount.subscribe(auditLogObserver);
 
-type PriceNumber = number & { readonly __brand: unique symbol }
-
-function createPrice(value: number): PriceNumber {
-	if (value < 0) {
-		throw new Error("Value must be positive")
-	}
-
-	return value as PriceNumber
+// 1. Test Valid Data
+try {
+  console.log("\nAttempting a normal withdrawal of $500...");
+  myAccount.withdraw(createMoneyAmount(500));
+  
+  console.log("\nAttempting a massive withdrawal of $6,000...");
+  myAccount.withdraw(createMoneyAmount(6000));
+} catch (error) {
+  if (error instanceof Error) console.error(`Error: ${error.message}`);
 }
 
-// factory function
-function createProduct(
-	id: string,
-	name: ProductName,
-	price: PriceNumber,
-): Product {
-	if (name !== "Shoes" && name !== "Shirt" && name !== "Pants") {
-		throw new Error("Name must be Shoes, Shirt, or Pants")
-	}
-
-	if (!id) {
-		throw new Error("Id must be provided")
-	}
-
-	if (price < 0) {
-		throw new Error("Price must be positive")
-	}
-
-	return {
-		id: uuidv4() as ProductId,
-		name,
-		price,
-	}
+// 2. Test "Impossible" Data (Using try/catch to prevent crashing)
+try {
+  console.log("\nAttempting to overdraw the account by $10,000...");
+  myAccount.withdraw(createMoneyAmount(10000)); 
+} catch (error) {
+  if (error instanceof Error) {
+    console.error(`🛡️ Blocked: ${error.message}`);
+  }
 }
-type Product = {
-	id: ProductId
-	name: ProductName
-	price: PriceNumber
-}
-
-type ProductId = string & { readonly __brand: unique symbol }
-type StockLevel = number & { readonly __brand: unique symbol }
-
-type ProductCreatedEvent = {
-	readonly type: "ProductCreated"
-	readonly productId: ProductId
-	readonly name: ProductName
-	readonly price: PriceNumber
-}
-
-type PriceUpdatedEvent = {
-	readonly type: "PriceUpdated"
-	readonly productId: ProductId
-	readonly oldPrice: PriceNumber
-	readonly newPrice: PriceNumber
-}
-
-// ✅ Precise — the event carries what changed and why
-type StockReducedEvent = {
-	readonly type: "StockReduced"
-	readonly productId: ProductId
-	readonly newLevel: StockLevel
-	readonly quantity: Quantity
-}
-type DomainEvent = ProductCreatedEvent | PriceUpdatedEvent | StockReducedEvent
-
-type Quantity = number & { readonly __brand: unique symbol }
-
-type Observer = (event: DomainEvent) => void
-
-const observers: Observer[] = []
-
-// first product (easy construction)
-const product1: Product = {
-	id: uuidv4() as ProductId,
-	name: "Shoes",
-	price: createPrice(100),
-}
-
-console.log(product1)
-
-const sendEmailMock: Observer = (event: DomainEvent) => {
-	console.log(`Email sent for event ${event.type}`)
-}
-
-const saveToDatabaseMock: Observer = (event: DomainEvent) => {
-	console.log(`Data saved to database for event ${event.type}`)
-}
-observers.push(sendEmailMock)
-observers.push(saveToDatabaseMock)
 
 try {
-	const product2 = createProduct(uuidv4(), "Shirt", createPrice(50))
-	console.log(product2)
-	observers.forEach((observer) =>
-		observer({
-			type: "ProductCreated",
-			productId: product2.id,
-			name: product2.name,
-			price: product2.price,
-		}),
-	)
+  console.log("\nAttempting a negative withdrawal (-$50)...");
+  myAccount.withdraw(createMoneyAmount(-50));
 } catch (error) {
-	if (error instanceof Error) {
-		console.error(error.message)
-	} else {
-		console.error("Unknown error")
-	}
+  if (error instanceof Error) {
+    console.error(`🛡️ Blocked: ${error.message}`);
+  }
 }
